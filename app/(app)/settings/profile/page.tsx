@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import PageTitle from "@/components/ui/page-title";
+import ProfileInfo from "@/components/settings/profile-info";
 import { createClient } from "@/lib/supabase-server";
 
 export default async function ProfilePage() {
@@ -12,53 +13,31 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const appMetadata = (user.app_metadata ?? {}) as Record<string, unknown>;
-  const provider =
-    typeof appMetadata.provider === "string" &&
-    appMetadata.provider.length > 0
-      ? appMetadata.provider
-      : "Email";
-
+  const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
   const displayName =
-    typeof user.user_metadata?.full_name === "string" &&
-    user.user_metadata.full_name.length > 0
-      ? user.user_metadata.full_name
-      : typeof user.user_metadata?.name === "string" &&
-          user.user_metadata.name.length > 0
-        ? user.user_metadata.name
-        : null;
+    typeof metadata.display_name === "string" ? metadata.display_name : "";
+  const username =
+    typeof metadata.username === "string" ? metadata.username : "";
+
+  const memberSince = user.created_at
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        year: "numeric",
+      }).format(new Date(user.created_at))
+    : null;
 
   return (
     <div className="mx-auto max-w-6xl">
       <PageTitle>Profile</PageTitle>
       <p className="mt-3 text-sm text-ink/55">
-        Your account details as provided by your sign-in method.
+        Your public profile and account details.
       </p>
       <div className="mt-6 max-w-xl space-y-4">
-        <section className="rounded-container bg-surface p-6 shadow-extruded">
-          <dl className="space-y-4">
-            {displayName && (
-              <div>
-                <dt className="text-xs font-semibold text-muted">Name</dt>
-                <dd className="mt-1 text-sm font-bold text-ink">
-                  {displayName}
-                </dd>
-              </div>
-            )}
-            <div>
-              <dt className="text-xs font-semibold text-muted">Email</dt>
-              <dd className="mt-1 text-sm font-bold text-ink">
-                {user.email ?? "Not available"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold text-muted">
-                Signed in via
-              </dt>
-              <dd className="mt-1 text-sm font-bold text-ink">{provider}</dd>
-            </div>
-          </dl>
-        </section>
+        <ProfileInfo
+          initialDisplayName={displayName}
+          initialUsername={username}
+          memberSince={memberSince}
+        />
       </div>
     </div>
   );

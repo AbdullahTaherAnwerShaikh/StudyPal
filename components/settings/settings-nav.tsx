@@ -11,6 +11,7 @@ import {
 const TABS = [
   { href: "/settings", label: "Appearance" },
   { href: "/settings/profile", label: "Profile" },
+  { href: "/settings/account", label: "Account" },
 ];
 
 export default function SettingsNav() {
