@@ -1,0 +1,33 @@
+import { createClient } from "@/lib/supabase-server";
+import AssistantView from "@/components/assistant/assistant-view";
+
+type CourseRow = {
+  name: string;
+  topics: { name: string }[] | null;
+};
+
+export default async function AssistantPage() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("courses")
+    .select("name, topics(name)")
+    .order("name");
+
+  const rows = (data ?? []) as unknown as CourseRow[];
+  const topicNames = rows.flatMap((row) =>
+    (row.topics ?? []).map((topic) => topic.name)
+  );
+
+  const suggestions: string[] = [];
+  if (topicNames[0]) suggestions.push(`Quiz me on ${topicNames[0]}`);
+  if (rows[0]) suggestions.push(`Explain ${rows[0].name} from scratch`);
+  if (topicNames[1]) suggestions.push(`I'm stuck on ${topicNames[1]} — help me`);
+  suggestions.push("What should I work on today?");
+
+  const greeting =
+    rows.length === 0
+      ? "Hi, I'm your study assistant! Add a course with topics first, then come back and I'll explain things, quiz you, or help you plan your studying."
+      : "Hi, I'm your study assistant. I can see your courses and topics — ask me to explain something, quiz you, or figure out what to study next.";
+
+  return <AssistantView greeting={greeting} suggestions={suggestions.slice(0, 4)} />;
+}
