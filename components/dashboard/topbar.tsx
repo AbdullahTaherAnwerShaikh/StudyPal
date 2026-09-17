@@ -1,13 +1,15 @@
 "use client";
 
-import { BTN_PRIMARY } from "@/components/ui/styles";
+import Brand from "@/components/ui/brand";
 
 export default function Topbar({
   email,
   onMenu,
+  demo = false,
 }: {
   email: string;
   onMenu: () => void;
+  demo?: boolean;
 }) {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 bg-surface px-4 shadow-extruded sm:px-6">
@@ -21,27 +23,17 @@ export default function Topbar({
             <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
           </svg>
         </button>
-        <span className="font-display text-lg font-extrabold tracking-tight lg:hidden">
-          Personal OS
+        <span className="lg:hidden">
+          <Brand />
         </span>
       </div>
 
       <div className="flex items-center gap-3">
         {email && (
           <span className="hidden max-w-[16rem] truncate text-xs font-medium text-muted sm:inline">
-            {email}
+            {demo ? "Demo mode" : email}
           </span>
         )}
-        <button
-          type="button"
-          title="Quick add — coming soon"
-          className={`${BTN_PRIMARY} px-4 py-2`}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-          </svg>
-          Add
-        </button>
       </div>
     </header>
   );

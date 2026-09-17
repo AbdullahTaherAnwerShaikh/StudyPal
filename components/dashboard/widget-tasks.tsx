@@ -1,20 +1,33 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoTasksWidget } from "@/lib/demo-data";
 import WidgetCard from "@/components/dashboard/widget-card";
 import WidgetEmpty from "@/components/dashboard/widget-empty";
+import WidgetTaskCheck from "@/components/dashboard/widget-task-check";
 import { PRIORITY_DOT, PRIORITY_RANK, relativeDayLabel } from "@/lib/dashboard";
 import { toDateKey } from "@/lib/dates";
 
 export default async function TasksWidget({ className = "" }: { className?: string }) {
-  const supabase = await createClient();
   const today = toDateKey(new Date());
+  const demo = await isDemoMode();
 
-  const { data } = await supabase
-    .from("tasks")
-    .select("id, title, priority, status, due_date")
-    .neq("status", "done");
+  let data: { id: string; title: string; priority: string; status: string; due_date: string | null }[];
 
-  const openTasks = (data ?? []).filter((task) => task.status !== "done");
+  if (demo) {
+    data = getDemoTasksWidget();
+  } else {
+    const supabase = await createClient();
+
+    const result = await supabase
+      .from("tasks")
+      .select("id, title, priority, status, due_date")
+      .neq("status", "done");
+
+    data = result.data ?? [];
+  }
+
+  const openTasks = data.filter((task) => task.status !== "done");
   const totalPending = openTasks.length;
   const tasks = openTasks
     .sort((a, b) => {
@@ -30,6 +43,7 @@ export default async function TasksWidget({ className = "" }: { className?: stri
   return (
     <WidgetCard
       title="Tasks"
+      href="/tasks"
       action={<span className="text-xs font-medium text-muted">{totalPending} open</span>}
       className={className}
     >
@@ -48,27 +62,7 @@ export default async function TasksWidget({ className = "" }: { className?: stri
             const overdue = task.due_date !== null && task.due_date < today;
             return (
               <li key={task.id} className="flex items-center gap-3">
-                <span
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-inner bg-surface shadow-inset-sm ${
-                    done ? "bg-success text-white" : ""
-                  }`}
-                >
-                  {done && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                      className="h-3 w-3"
-                    >
-                      <path
-                        d="M5 13l4 4L19 7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </span>
+                <WidgetTaskCheck id={task.id} title={task.title} done={done} demo={demo} />
                 <span className="min-w-0 flex-1 truncate text-sm text-ink">
                   {task.title}
                 </span>

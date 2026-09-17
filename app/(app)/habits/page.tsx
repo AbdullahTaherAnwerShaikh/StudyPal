@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoHabitsPage } from "@/lib/demo-data";
 import HabitsView from "@/components/habits/habits-view";
 import type { HabitLogMap, HabitRow } from "@/lib/types";
 
@@ -10,6 +12,10 @@ function toDateKey(date: Date): string {
 }
 
 export default async function HabitsPage() {
+  if (await isDemoMode()) {
+    return <HabitsView {...getDemoHabitsPage()} />;
+  }
+
   const supabase = await createClient();
   const today = toDateKey(new Date());
 

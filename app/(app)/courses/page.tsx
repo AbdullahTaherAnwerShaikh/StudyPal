@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoCoursesPage } from "@/lib/demo-data";
 import AddCourseButton from "@/components/courses/add-course-button";
 import PageTitle from "@/components/ui/page-title";
 import { CARD } from "@/components/ui/styles";
@@ -14,26 +16,36 @@ type CourseCard = {
 };
 
 export default async function CoursesPage() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("courses")
-    .select("id, name, color, credits, exams(count), topics(count)")
-    .order("created_at", { ascending: true });
+  const demo = await isDemoMode();
 
-  const courses: CourseCard[] = (data ?? []).map((row) => ({
-    id: row.id,
-    name: row.name,
-    color: row.color,
-    credits: row.credits,
-    examCount: Array.isArray(row.exams) ? row.exams[0]?.count ?? 0 : 0,
-    topicCount: Array.isArray(row.topics) ? row.topics[0]?.count ?? 0 : 0,
-  }));
+  let courses: CourseCard[] = [];
+  let error: Error | null = null;
+
+  if (demo) {
+    courses = getDemoCoursesPage();
+  } else {
+    const client = await createClient();
+    const result = await client
+      .from("courses")
+      .select("id, name, color, credits, exams(count), topics(count)")
+      .order("created_at", { ascending: true });
+
+    error = result.error;
+    courses = (result.data ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      color: row.color,
+      credits: row.credits,
+      examCount: Array.isArray(row.exams) ? row.exams[0]?.count ?? 0 : 0,
+      topicCount: Array.isArray(row.topics) ? row.topics[0]?.count ?? 0 : 0,
+    }));
+  }
 
   return (
     <div className="mx-auto max-w-7xl">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <PageTitle>Courses</PageTitle>
-        <AddCourseButton />
+        <AddCourseButton demo={demo} />
       </div>
       <p className="mt-3 text-sm text-muted">
         Your subjects for this semester.

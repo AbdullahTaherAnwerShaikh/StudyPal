@@ -10,15 +10,21 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 export default function ThemeSettings({
   initialTheme,
   initialMode,
+  demo = false,
 }: {
   initialTheme: ThemeKey;
   initialMode: ThemeMode;
+  demo?: boolean;
 }) {
   const [theme, setTheme] = useState<ThemeKey>(initialTheme);
   const [mode, setMode] = useState<ThemeMode>(initialMode);
   const [status, setStatus] = useState<SaveStatus>("idle");
 
   async function persist(nextTheme: ThemeKey, nextMode: ThemeMode) {
+    if (demo) {
+      setStatus("saved");
+      return;
+    }
     setStatus("saving");
     try {
       const res = await fetch("/api/settings", {

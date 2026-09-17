@@ -43,7 +43,9 @@ export default async function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
-  if (!user && isProtected) {
+  const isDemo = request.cookies.get("sb-demo")?.value === "1";
+
+  if (!user && isProtected && !isDemo) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

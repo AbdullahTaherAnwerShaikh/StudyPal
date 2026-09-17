@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoRecentNotesWidget } from "@/lib/demo-data";
 import WidgetCard from "@/components/dashboard/widget-card";
 import WidgetEmpty from "@/components/dashboard/widget-empty";
 import { timeAgo } from "@/lib/dashboard";
@@ -15,30 +17,46 @@ type RawNote = {
 };
 
 export default async function RecentNotes({ className = "" }: { className?: string }) {
-  const supabase = await createClient();
+  let notes: {
+    id: string;
+    title: string;
+    updated_at: string;
+    course_id: string | null;
+    topic_id: string | null;
+    course_name: string | null;
+    course_color: string | null;
+    topic_name: string | null;
+  }[];
 
-  const { data } = await supabase
-    .from("notes")
-    .select(
-      "id, title, updated_at, course_id, topic_id, courses(name, color), topics(name)"
-    )
-    .order("updated_at", { ascending: false })
-    .limit(4);
+  if (await isDemoMode()) {
+    notes = getDemoRecentNotesWidget();
+  } else {
+    const supabase = await createClient();
 
-  const notes = ((data ?? []) as RawNote[]).map((row) => ({
-    id: row.id,
-    title: row.title,
-    updated_at: row.updated_at,
-    course_id: row.course_id,
-    topic_id: row.topic_id,
-    course_name: row.courses?.[0]?.name ?? null,
-    course_color: row.courses?.[0]?.color ?? null,
-    topic_name: row.topics?.[0]?.name ?? null,
-  }));
+    const { data } = await supabase
+      .from("notes")
+      .select(
+        "id, title, updated_at, course_id, topic_id, courses(name, color), topics(name)"
+      )
+      .order("updated_at", { ascending: false })
+      .limit(4);
+
+    notes = ((data ?? []) as RawNote[]).map((row) => ({
+      id: row.id,
+      title: row.title,
+      updated_at: row.updated_at,
+      course_id: row.course_id,
+      topic_id: row.topic_id,
+      course_name: row.courses?.[0]?.name ?? null,
+      course_color: row.courses?.[0]?.color ?? null,
+      topic_name: row.topics?.[0]?.name ?? null,
+    }));
+  }
 
   return (
     <WidgetCard
       title="Recent Notes"
+      href="/notes"
       action={
         <span className="text-xs font-medium text-muted">{notes.length} recent</span>
       }

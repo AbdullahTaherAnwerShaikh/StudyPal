@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoStudyPlanWidget, DEMO_COURSES, DEMO_TOPICS } from "@/lib/demo-data";
 import WidgetCard from "@/components/dashboard/widget-card";
 import WidgetEmpty from "@/components/dashboard/widget-empty";
 import { formatDateKey, relativeDayLabel } from "@/lib/dashboard";
@@ -42,23 +44,51 @@ type PlanRow = {
   completed_days: string[] | null;
 };
 
+type CourseWithTopics = {
+  name: string;
+  topics: { name: string; is_completed: boolean }[] | null;
+};
+
 export default async function StudyPlanWidget({ className = "" }: { className?: string }) {
-  const supabase = await createClient();
   const today = toDateKey(new Date());
 
-  const [planResult, coursesResult] = await Promise.all([
-    supabase
-      .from("study_plans")
-      .select("params, days, completed_days")
-      .order("created_at", { ascending: false })
-      .limit(1),
-    supabase
-      .from("courses")
-      .select("name, topics(name, is_completed)"),
-  ]);
+  let plan: PlanRow | undefined;
+  let coursesData: CourseWithTopics[];
+
+  if (await isDemoMode()) {
+    const demo = getDemoStudyPlanWidget();
+    plan = {
+      params: demo.plan.params,
+      days: demo.plan.days,
+      completed_days: demo.plan.completed_days,
+    };
+    coursesData = DEMO_COURSES.map((c) => ({
+      name: c.name,
+      topics: (DEMO_TOPICS[c.id] ?? []).map((t) => ({
+        name: t.name,
+        is_completed: t.is_completed,
+      })),
+    }));
+  } else {
+    const supabase = await createClient();
+
+    const [planResult, coursesResult] = await Promise.all([
+      supabase
+        .from("study_plans")
+        .select("params, days, completed_days")
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("courses")
+        .select("name, topics(name, is_completed)"),
+    ]);
+
+    plan = (planResult.data ?? [])[0] as PlanRow | undefined;
+    coursesData = (coursesResult.data ?? []) as CourseWithTopics[];
+  }
 
   const completedTopicKeys = new Set<string>();
-  for (const course of coursesResult.data ?? []) {
+  for (const course of coursesData) {
     for (const topic of course.topics ?? []) {
       if (topic.is_completed) {
         completedTopicKeys.add(topicKey(course.name, topic.name));
@@ -66,14 +96,11 @@ export default async function StudyPlanWidget({ className = "" }: { className?: 
     }
   }
 
-  const topicsFlat = (coursesResult.data ?? []).flatMap(
-    (course) => course.topics ?? []
-  );
+  const topicsFlat = coursesData.flatMap((course) => course.topics ?? []);
   const topicTotal = topicsFlat.length;
   const topicDone = topicsFlat.filter((topic) => topic.is_completed).length;
   const percent = topicTotal > 0 ? Math.round((topicDone / topicTotal) * 100) : 0;
 
-  const plan = (planResult.data ?? [])[0] as PlanRow | undefined;
   const days = Array.isArray(plan?.days)
     ? [...(plan?.days as PlanDay[])].sort((a, b) => a.date.localeCompare(b.date))
     : [];
@@ -111,6 +138,7 @@ export default async function StudyPlanWidget({ className = "" }: { className?: 
   return (
     <WidgetCard
       title="Current Study Plan"
+      href="/planner"
       action={
         <span className="text-xs font-medium text-muted">
           {topicTotal > 0 ? `${percent}% of topics done` : "No topics yet"}

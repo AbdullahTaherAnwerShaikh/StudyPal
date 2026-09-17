@@ -9,11 +9,12 @@ import WidgetSkeleton from "@/components/dashboard/widget-skeleton";
 import DashboardGrid from "@/components/dashboard/dashboard-grid";
 import PageTitle from "@/components/ui/page-title";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
 import {
   DASHBOARD_WIDGETS,
   sanitizeDashboardLayout,
 } from "@/lib/dashboard-layout";
-import type { DashboardWidgetKey } from "@/lib/dashboard-layout";
+import type { DashboardLayoutEntry, DashboardWidgetKey } from "@/lib/dashboard-layout";
 
 const WIDGET_ELEMENTS: Record<DashboardWidgetKey, ReactNode> = {
   schedule: (
@@ -44,13 +45,25 @@ const WIDGET_ELEMENTS: Record<DashboardWidgetKey, ReactNode> = {
 };
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("user_settings")
-    .select("dashboard_layout")
-    .maybeSingle();
+  let layout: DashboardLayoutEntry[];
 
-  const layout = sanitizeDashboardLayout(data?.dashboard_layout);
+  if (await isDemoMode()) {
+    layout = sanitizeDashboardLayout([
+      "schedule",
+      "study-plan",
+      "tasks",
+      "habits",
+      "notes",
+    ]);
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("user_settings")
+      .select("dashboard_layout")
+      .maybeSingle();
+
+    layout = sanitizeDashboardLayout(data?.dashboard_layout);
+  }
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -65,7 +78,6 @@ export default async function DashboardPage() {
           widgets={DASHBOARD_WIDGETS.map((widget) => ({
             key: widget.key,
             label: widget.label,
-            span: widget.span,
             element: WIDGET_ELEMENTS[widget.key],
           }))}
         />

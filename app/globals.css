@@ -11,6 +11,9 @@
   --theme-danger: #e05252;
   --theme-warn: #e8b33c;
 
+  --brand-shade: rgb(163 177 198 / 0.6);
+  --brand-lite: rgb(255 255 255 / 0.75);
+
   --theme-shadow-extruded: 9px 9px 16px rgb(163 177 198 / 0.6),
     -9px -9px 16px rgb(255 255 255 / 0.5);
   --theme-shadow-extruded-hover: 12px 12px 20px rgb(163 177 198 / 0.7),
@@ -37,6 +40,9 @@
   --theme-success: #34d399;
   --theme-danger: #f87171;
   --theme-warn: #fbbf24;
+
+  --brand-shade: rgb(0 0 0 / 0.45);
+  --brand-lite: rgb(255 255 255 / 0.05);
 
   --theme-shadow-extruded: 9px 9px 16px rgb(0 0 0 / 0.5),
     -9px -9px 16px rgb(255 255 255 / 0.04);

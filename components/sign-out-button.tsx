@@ -2,11 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { DEMO_COOKIE } from "@/lib/demo-cookie";
 
-export default function SignOutButton() {
+export default function SignOutButton({ demo = false }: { demo?: boolean }) {
   const router = useRouter();
 
   async function handleSignOut() {
+    if (demo) {
+      document.cookie = `${DEMO_COOKIE}=; path=/; max-age=0`;
+      router.push("/");
+      router.refresh();
+      return;
+    }
     await createClient().auth.signOut();
     router.push("/");
     router.refresh();
@@ -20,7 +27,7 @@ export default function SignOutButton() {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      Sign out
+      {demo ? "Exit demo" : "Sign out"}
     </button>
   );
 }

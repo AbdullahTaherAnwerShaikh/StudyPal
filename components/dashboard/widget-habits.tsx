@@ -1,19 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoHabitsWidget } from "@/lib/demo-data";
 import WidgetCard from "@/components/dashboard/widget-card";
 import WidgetEmpty from "@/components/dashboard/widget-empty";
+import WidgetHabitRow from "@/components/dashboard/widget-habit-row";
 import { isDueToday, toDateKey } from "@/lib/dates";
 
-const SCHEDULE_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-const SCHEDULE_LABELS: Record<string, string> = {
-  mon: "M",
-  tue: "T",
-  wed: "W",
-  thu: "T",
-  fri: "F",
-  sat: "S",
-  sun: "S",
-};
 const DAY_NAMES = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 type HabitLike = {
@@ -48,36 +41,56 @@ function nextSchedule(
 }
 
 export default async function HabitsWidget({ className = "" }: { className?: string }) {
-  const supabase = await createClient();
   const today = toDateKey(new Date());
+  const demo = await isDemoMode();
 
-  const { data: habits } = await supabase
-    .from("habits")
-    .select("id, name, streak, scheduled_days")
-    .order("name", { ascending: true });
+  let habitsData: HabitLike[];
+  let loggedSet: Set<string>;
 
-  const allHabits: HabitLike[] = (habits ?? []).map((habit) => ({
-    ...habit,
-    scheduled_days: Array.isArray(habit.scheduled_days)
-      ? (habit.scheduled_days as string[])
-      : [],
-  }));
+  if (demo) {
+    const demo = getDemoHabitsWidget();
+    habitsData = demo.habits.map((habit) => ({ ...habit }));
+    loggedSet = new Set(
+      demo.habits.filter((habit) => (demo.logs[habit.id] ?? []).includes(today)).map((habit) => habit.id)
+    );
+  } else {
+    const supabase = await createClient();
+
+    const { data: habits } = await supabase
+      .from("habits")
+      .select("id, name, streak, scheduled_days")
+      .order("name", { ascending: true });
+
+    habitsData = (habits ?? []).map((habit) => ({
+      id: habit.id,
+      name: habit.name,
+      streak: habit.streak,
+      scheduled_days: Array.isArray(habit.scheduled_days)
+        ? (habit.scheduled_days as string[])
+        : [],
+    }));
+
+    const dueIds = habitsData
+      .filter((habit) => isDueToday(habit.scheduled_days, today))
+      .map((habit) => habit.id);
+
+    const loggedIds: string[] = [];
+    if (dueIds.length > 0) {
+      const { data: logs } = await supabase
+        .from("habit_logs")
+        .select("habit_id")
+        .in("habit_id", dueIds)
+        .eq("date", today);
+      loggedIds.push(...(logs ?? []).map((row) => row.habit_id as string));
+    }
+    loggedSet = new Set(loggedIds);
+  }
+
+  const allHabits: HabitLike[] = habitsData;
 
   const dueToday = allHabits.filter((habit) =>
     isDueToday(habit.scheduled_days, today)
   );
-
-  const loggedIds: string[] = [];
-  if (dueToday.length > 0) {
-    const ids = dueToday.map((habit) => habit.id);
-    const { data: logs } = await supabase
-      .from("habit_logs")
-      .select("habit_id")
-      .in("habit_id", ids)
-      .eq("date", today);
-    loggedIds.push(...(logs ?? []).map((row) => row.habit_id as string));
-  }
-  const loggedSet = new Set(loggedIds);
 
   const nextUp = allHabits
     .map((habit) => ({ habit, next: nextSchedule(habit, today) }))
@@ -127,6 +140,7 @@ export default async function HabitsWidget({ className = "" }: { className?: str
   return (
     <WidgetCard
       title="Habits"
+      href="/habits"
       action={
         <span className="text-xs font-medium text-muted">
           {dueToday.length > 0 ? `${dueToday.length} due today` : `${allHabits.length} habits`}
@@ -156,43 +170,15 @@ export default async function HabitsWidget({ className = "" }: { className?: str
 
           <ul className="space-y-4">
             {rows.map((row) => (
-              <li key={row.id}>
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="min-w-0 truncate text-ink">{row.habit.name}</span>
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                      row.success
-                        ? "bg-success/15 text-success"
-                        : "bg-surface text-accent shadow-inset-sm"
-                    }`}
-                  >
-                    {row.chip}
-                  </span>
-                </div>
-                <div className="mt-1.5 flex items-center justify-between gap-3">
-                  <div className="flex gap-1.5">
-                    {SCHEDULE_ORDER.map((key) => {
-                      const scheduled = row.habit.scheduled_days.includes(key);
-                      return (
-                        <span
-                          key={key}
-                          title={key}
-                          className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] ${
-                            scheduled
-                              ? "font-bold text-accent shadow-inset-sm"
-                              : "text-muted/50"
-                          }`}
-                        >
-                          {SCHEDULE_LABELS[key]}
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <span className="shrink-0 text-xs font-bold text-accent">
-                    {row.habit.streak}-day streak
-                  </span>
-                </div>
-              </li>
+              <WidgetHabitRow
+                key={row.id}
+                habit={row.habit}
+                loggedToday={row.success}
+                dueTodayRow={row.dueTodayRow}
+                chip={row.chip}
+                demo={demo}
+                today={today}
+              />
             ))}
           </ul>
         </>

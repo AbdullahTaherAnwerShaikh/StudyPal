@@ -9,6 +9,7 @@ import {
   runChat,
 } from "@/lib/assistant/gemini";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
 import type { AssistantMessage } from "@/lib/assistant/gemini";
 
 export const runtime = "nodejs";
@@ -71,6 +72,12 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
+    if (await isDemoMode()) {
+      return NextResponse.json(
+        { error: "The AI assistant is turned off in demo mode. Sign in for a real account to chat." },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { error: "You must be signed in to talk to the assistant." },
       { status: 401 }

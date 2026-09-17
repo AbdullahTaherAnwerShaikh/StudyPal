@@ -21,13 +21,16 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { layoutsAreEqual } from "@/lib/dashboard-layout";
-import type { DashboardWidgetKey } from "@/lib/dashboard-layout";
+import type {
+  DashboardLayoutEntry,
+  DashboardWidgetKey,
+  DashboardWidgetSpan,
+} from "@/lib/dashboard-layout";
 import { BTN_SMALL_GHOST, BTN_SMALL_PRIMARY } from "@/components/ui/styles";
 
 type GridWidget = {
   key: DashboardWidgetKey;
   label: string;
-  span: string;
   element: ReactNode;
 };
 
@@ -36,12 +39,14 @@ function SortableItem({
   span,
   label,
   enabled,
+  toggleWide,
   children,
 }: {
   id: string;
-  span: string;
+  span: DashboardWidgetSpan;
   label: string;
   enabled: boolean;
+  toggleWide: () => void;
   children: ReactNode;
 }) {
   const {
@@ -67,6 +72,37 @@ function SortableItem({
       aria-label={enabled ? `Widget: ${label}. Drag to rearrange.` : undefined}
       className={`relative ${span} ${isDragging ? "z-10" : ""}`}
     >
+      {enabled && (
+        <div
+          className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-full bg-surface p-1 text-[11px] font-bold shadow-extruded"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleWide();
+            }}
+            className={`rounded-full px-2.5 py-1 transition-colors ${
+              span === "" ? "text-accent shadow-inset-sm" : "text-muted"
+            }`}
+          >
+            Half
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleWide();
+            }}
+            className={`rounded-full px-2.5 py-1 transition-colors ${
+              span === "md:col-span-2" ? "text-accent shadow-inset-sm" : "text-muted"
+            }`}
+          >
+            Wide
+          </button>
+        </div>
+      )}
       <div
         className={`transition-opacity duration-200 ${
           enabled && (isDragging ? "opacity-40" : "cursor-grab")
@@ -82,12 +118,12 @@ export default function DashboardGrid({
   initialLayout,
   widgets,
 }: {
-  initialLayout: DashboardWidgetKey[];
+  initialLayout: DashboardLayoutEntry[];
   widgets: GridWidget[];
 }) {
   const [savedLayout, setSavedLayout] =
-    useState<DashboardWidgetKey[]>(initialLayout);
-  const [layout, setLayout] = useState<DashboardWidgetKey[]>(initialLayout);
+    useState<DashboardLayoutEntry[]>(initialLayout);
+  const [layout, setLayout] = useState<DashboardLayoutEntry[]>(initialLayout);
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
@@ -112,11 +148,24 @@ export default function DashboardGrid({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = layout.indexOf(active.id as DashboardWidgetKey);
-    const newIndex = layout.indexOf(over.id as DashboardWidgetKey);
+    const oldIndex = layout.findIndex((entry) => entry.key === active.id);
+    const newIndex = layout.findIndex((entry) => entry.key === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
     const next = arrayMove(layout, oldIndex, newIndex);
     setLayout(next);
+  }
+
+  function toggleWide(key: DashboardWidgetKey) {
+    setLayout(
+      layout.map((entry) =>
+        entry.key === key
+          ? {
+              ...entry,
+              span: entry.span === "md:col-span-2" ? "" : "md:col-span-2",
+            }
+          : entry
+      )
+    );
   }
 
   async function saveChanges() {
@@ -148,7 +197,7 @@ export default function DashboardGrid({
       <div className="mb-4 flex items-center justify-end gap-2 sm:justify-between">
         {editing ? (
           <p className="hidden text-xs font-medium text-muted sm:block">
-            Editing layout — drag cards to rearrange.
+            Editing layout — drag cards to rearrange, use Half/Wide to resize.
           </p>
         ) : (
           <p className="hidden text-xs font-medium text-muted sm:block">
@@ -169,7 +218,6 @@ export default function DashboardGrid({
               <button
                 type="button"
                 onClick={saveChanges}
-                disabled={!dirty}
                 className={BTN_SMALL_PRIMARY}
               >
                 Save changes
@@ -192,18 +240,22 @@ export default function DashboardGrid({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={[...layout]} strategy={rectSortingStrategy}>
+        <SortableContext
+        items={layout.map((entry) => entry.key)}
+        strategy={rectSortingStrategy}
+      >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {layout.map((key) => {
-              const meta = widgetMeta.get(key);
+            {layout.map((entry) => {
+              const meta = widgetMeta.get(entry.key);
               if (!meta) return null;
               return (
                 <SortableItem
-                  key={key}
-                  id={key}
-                  span={meta.span}
+                  key={entry.key}
+                  id={entry.key}
+                  span={entry.span}
                   label={meta.label}
                   enabled={editing}
+                  toggleWide={() => toggleWide(entry.key)}
                 >
                   {meta.element}
                 </SortableItem>

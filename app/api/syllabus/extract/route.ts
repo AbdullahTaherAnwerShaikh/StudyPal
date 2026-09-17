@@ -5,6 +5,7 @@ import {
   type SyllabusInput,
 } from "@/lib/syllabus/extract";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -60,6 +61,12 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
+    if (await isDemoMode()) {
+      return NextResponse.json(
+        { error: "Syllabus import is turned off in demo mode. Sign in for a real account to import a syllabus." },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { error: "You must be signed in to use this." },
       { status: 401 }

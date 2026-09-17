@@ -8,39 +8,81 @@ export const DASHBOARD_WIDGETS = [
 
 export type DashboardWidgetKey = (typeof DASHBOARD_WIDGETS)[number]["key"];
 
+export type DashboardWidgetSpan = "" | "md:col-span-2";
+
+export type DashboardLayoutEntry = {
+  key: DashboardWidgetKey;
+  span: DashboardWidgetSpan;
+};
+
 export const DASHBOARD_WIDGET_KEYS: readonly DashboardWidgetKey[] =
   DASHBOARD_WIDGETS.map((widget) => widget.key);
 
-export const DEFAULT_DASHBOARD_LAYOUT: readonly DashboardWidgetKey[] = [
-  ...DASHBOARD_WIDGET_KEYS,
-];
+export const WIDE_SPAN: DashboardWidgetSpan = "md:col-span-2";
 
-export function sanitizeDashboardLayout(
-  input: unknown
-): DashboardWidgetKey[] {
-  if (!Array.isArray(input)) return [...DEFAULT_DASHBOARD_LAYOUT];
+const DEFAULT_SPANS = Object.fromEntries(
+  DASHBOARD_WIDGETS.map((widget) => [widget.key, widget.span])
+) as Record<DashboardWidgetKey, DashboardWidgetSpan>;
 
-  const seen = new Set<DashboardWidgetKey>();
-  const ordered: DashboardWidgetKey[] = [];
-  for (const key of input) {
-    if (
-      typeof key === "string" &&
-      (DASHBOARD_WIDGET_KEYS as readonly string[]).includes(key) &&
-      !seen.has(key as DashboardWidgetKey)
-    ) {
-      seen.add(key as DashboardWidgetKey);
-      ordered.push(key as DashboardWidgetKey);
+export function defaultDashboardLayout(): DashboardLayoutEntry[] {
+  return DASHBOARD_WIDGETS.map((widget) => ({
+    key: widget.key,
+    span: widget.span,
+  }));
+}
+
+function isWidgetKey(value: string): value is DashboardWidgetKey {
+  return (DASHBOARD_WIDGET_KEYS as readonly string[]).includes(value);
+}
+
+function parseSpan(value: unknown): DashboardWidgetSpan {
+  return value === WIDE_SPAN ? WIDE_SPAN : "";
+}
+
+function parseLayoutItem(item: unknown): DashboardLayoutEntry | null {
+  if (typeof item === "string") {
+    if (!isWidgetKey(item)) return null;
+    return { key: item, span: DEFAULT_SPANS[item] };
+  }
+  if (typeof item === "object" && item !== null && !Array.isArray(item)) {
+    const record = item as { key?: unknown; span?: unknown };
+    if (typeof record.key === "string" && isWidgetKey(record.key)) {
+      return { key: record.key, span: parseSpan(record.span) };
     }
   }
-  for (const key of DEFAULT_DASHBOARD_LAYOUT) {
-    if (!seen.has(key)) ordered.push(key);
+  return null;
+}
+
+export function sanitizeDashboardLayout(input: unknown): DashboardLayoutEntry[] {
+  if (!Array.isArray(input)) return defaultDashboardLayout();
+
+  const seen = new Set<DashboardWidgetKey>();
+  const ordered: DashboardLayoutEntry[] = [];
+  for (const item of input) {
+    const parsed = parseLayoutItem(item);
+    if (parsed && !seen.has(parsed.key)) {
+      seen.add(parsed.key);
+      ordered.push(parsed);
+    }
+  }
+  for (const { key, span } of defaultDashboardLayout()) {
+    if (!seen.has(key)) ordered.push({ key, span });
   }
   return ordered;
 }
 
+export function serializeDashboardLayout(
+  entries: DashboardLayoutEntry[]
+): (string | { key: DashboardWidgetKey; span: DashboardWidgetSpan })[] {
+  return entries.map((entry) => (entry.span ? { key: entry.key, span: entry.span } : entry.key));
+}
+
 export function layoutsAreEqual(
-  a: readonly DashboardWidgetKey[],
-  b: readonly DashboardWidgetKey[]
+  a: readonly DashboardLayoutEntry[],
+  b: readonly DashboardLayoutEntry[]
 ): boolean {
-  return a.length === b.length && a.every((key, index) => key === b[index]);
+  return (
+    a.length === b.length &&
+    a.every((entry, index) => entry.key === b[index].key && entry.span === b[index].span)
+  );
 }

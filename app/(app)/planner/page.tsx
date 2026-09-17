@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoPlannerPage } from "@/lib/demo-data";
 import PlannerView from "@/components/planner/planner-view";
 import type {
   PlannerCourse,
@@ -22,6 +24,11 @@ type SavedPlanRowData = {
 };
 
 export default async function PlannerPage() {
+  if (await isDemoMode()) {
+    const demo = getDemoPlannerPage();
+    return <PlannerView {...demo} />;
+  }
+
   const supabase = await createClient();
 
   const [coursesResult, plansResult] = await Promise.all([

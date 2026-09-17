@@ -1,8 +1,14 @@
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoTasksPage } from "@/lib/demo-data";
 import TasksView from "@/components/tasks/tasks-view";
 import type { TaskRow } from "@/lib/types";
 
 export default async function TasksPage() {
+  if (await isDemoMode()) {
+    return <TasksView {...getDemoTasksPage()} />;
+  }
+
   const supabase = await createClient();
   const [tasksResult, coursesResult] = await Promise.all([
     supabase

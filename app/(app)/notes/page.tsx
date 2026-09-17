@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoNotesPage } from "@/lib/demo-data";
 import NotesView from "@/components/notes/notes-view";
 import type { NoteListItem } from "@/lib/types";
 
@@ -15,6 +17,10 @@ type RawNote = {
 };
 
 export default async function NotesPage() {
+  if (await isDemoMode()) {
+    return <NotesView {...getDemoNotesPage()} />;
+  }
+
   const supabase = await createClient();
   const [notesResult, coursesResult] = await Promise.all([
     supabase

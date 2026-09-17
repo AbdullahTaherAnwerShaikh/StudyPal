@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoScheduleWidget } from "@/lib/demo-data";
 import WidgetCard from "@/components/dashboard/widget-card";
 import WidgetEmpty from "@/components/dashboard/widget-empty";
 import { PRIORITY_DOT, PRIORITY_RANK } from "@/lib/dashboard";
@@ -23,8 +25,14 @@ type PlanRow = {
 };
 
 export default async function TodaysSchedule({ className = "" }: { className?: string }) {
-  const supabase = await createClient();
   const today = toDateKey(new Date());
+
+  if (await isDemoMode()) {
+    const demo = getDemoScheduleWidget();
+    return renderSchedule({ items: demo.items, tasks: demo.tasks, className });
+  }
+
+  const supabase = await createClient();
 
   const [planResult, tasksResult] = await Promise.all([
     supabase
@@ -52,11 +60,24 @@ export default async function TodaysSchedule({ className = "" }: { className?: s
         a.title.localeCompare(b.title)
     );
 
+  return renderSchedule({ items, tasks, className });
+}
+
+function renderSchedule({
+  items,
+  tasks,
+  className,
+}: {
+  items: PlanItem[];
+  tasks: { id: string; title: string; priority: string; status: string; due_date: string | null }[];
+  className: string;
+}) {
   const total = items.length + tasks.length;
 
   return (
     <WidgetCard
       title="Today's Schedule"
+      href="/planner"
       action={
         <span className="text-xs font-medium text-muted">
           {total} item{total === 1 ? "" : "s"}

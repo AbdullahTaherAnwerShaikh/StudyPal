@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
+import { getDemoAssistantPage } from "@/lib/demo-data";
 import AssistantView from "@/components/assistant/assistant-view";
 
 type CourseRow = {
@@ -7,6 +9,17 @@ type CourseRow = {
 };
 
 export default async function AssistantPage() {
+  if (await isDemoMode()) {
+    const demo = getDemoAssistantPage();
+    return (
+      <AssistantView
+        demo
+        greeting="Hi, I'm your study assistant. In demo mode, AI chat is turned off — sign in to ask me to explain things, quiz you, or plan your studying."
+        suggestions={["How do I sign up?", "What can I do in the demo?"]}
+      />
+    );
+  }
+
   const supabase = await createClient();
   const { data } = await supabase
     .from("courses")

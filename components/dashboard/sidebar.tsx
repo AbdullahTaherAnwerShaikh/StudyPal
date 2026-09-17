@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SignOutButton from "@/components/sign-out-button";
+import Brand from "@/components/ui/brand";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -18,9 +19,11 @@ const NAV_ITEMS = [
 export default function Sidebar({
   open,
   onClose,
+  demo = false,
 }: {
   open: boolean;
   onClose: () => void;
+  demo?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -44,11 +47,8 @@ export default function Sidebar({
         }`}
       >
         <div className="flex h-16 items-center justify-between px-5">
-          <Link
-            href="/"
-            className="font-display text-lg font-extrabold tracking-tight text-ink"
-          >
-            Personal OS
+          <Link href="/" className="flex items-center">
+            <Brand />
           </Link>
           <button
             onClick={onClose}
@@ -89,7 +89,7 @@ export default function Sidebar({
         </nav>
 
         <div className="p-4">
-          <SignOutButton />
+          <SignOutButton demo={demo} />
         </div>
       </aside>
     </>

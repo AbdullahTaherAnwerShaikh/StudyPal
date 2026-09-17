@@ -3,6 +3,7 @@ import { MODEL, PlannerApiError, generatePlanJson } from "@/lib/planner/gemini";
 import { parseRequest } from "@/lib/planner/parse";
 import { repairPlan } from "@/lib/planner/repair";
 import { createClient } from "@/lib/supabase-server";
+import { isDemoMode } from "@/lib/demo";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,6 +26,12 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
+    if (await isDemoMode()) {
+      return NextResponse.json(
+        { error: "Plan generation is turned off in demo mode. Sign in for a real account to generate a new plan." },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { error: "You must be signed in to generate a plan." },
       { status: 401 }

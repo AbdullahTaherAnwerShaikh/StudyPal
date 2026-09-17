@@ -12,9 +12,11 @@ const WELCOME_FALLBACK =
 export default function AssistantView({
   greeting,
   suggestions,
+  demo = false,
 }: {
   greeting: string;
   suggestions: string[];
+  demo?: boolean;
 }) {
   const [messages, setMessages] = useState<AssistantMessage[]>([
     { role: "assistant", content: greeting || WELCOME_FALLBACK },
@@ -38,6 +40,19 @@ export default function AssistantView({
     setMessages(history);
     setInput("");
     setSending(true);
+
+    if (demo) {
+      setMessages((list) => [
+        ...list,
+        {
+          role: "assistant",
+          content:
+            "Demo mode has restricted functionality — the AI assistant is turned off, so no credits are used. Sign in to chat with Gemini.",
+        },
+      ]);
+      setSending(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/assistant/chat", {
