@@ -172,19 +172,6 @@ export default function NotesView({
                 </div>
               )}
 
-              {note.tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {note.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-muted"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
               <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-muted">
                 {excerpt(note.content) || "Empty note."}
               </p>

@@ -74,7 +74,7 @@ function SortableItem({
     >
       {enabled && (
         <div
-          className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-full bg-surface p-1 text-[11px] font-bold shadow-extruded"
+          className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full bg-surface p-1 text-[11px] font-bold shadow-extruded"
           onPointerDown={(event) => event.stopPropagation()}
         >
           <button

@@ -28,6 +28,9 @@ export const TEXT_DELETE =
 export const ERROR_BANNER =
   "rounded-btn bg-surface p-4 text-xs font-bold text-danger shadow-inset";
 
+export const INFO_BANNER =
+  "rounded-btn bg-accent/10 p-4 text-xs font-bold text-accent shadow-inset";
+
 export const CARD = "rounded-container bg-surface shadow-extruded";
 
 export const SEGMENT_TRACK =

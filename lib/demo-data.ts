@@ -90,13 +90,12 @@ function buildHabitLogs(): HabitLogMap {
   const logs: HabitLogMap = {};
   for (const habit of DEMO_HABITS) {
     const dates: string[] = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 1; i < 7; i++) {
       const d = addDays(TODAY, -i);
       const key = toDateKey(d);
       const dayName = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][d.getDay()];
       if (habit.scheduled_days.includes(dayName)) {
-        const skip = (habit.id === "hab-3" && i === 2) || (habit.id === "hab-1" && i === 4);
-        if (!skip) dates.push(key);
+        dates.push(key);
       }
     }
     logs[habit.id] = dates;

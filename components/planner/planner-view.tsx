@@ -10,6 +10,7 @@ import {
   BTN_SMALL_GHOST,
   CARD,
   ERROR_BANNER,
+  INFO_BANNER,
   INPUT,
   LABEL,
   SEGMENT_ACTIVE,
@@ -52,10 +53,12 @@ export default function PlannerView({
   courses,
   exams,
   latest,
+  demo = false,
 }: {
   courses: PlannerCourse[];
   exams: PlannerExam[];
   latest: SavedPlanRow | null;
+  demo?: boolean;
 }) {
   const initialParams = latest?.params;
   const [startDate, setStartDate] = useState(initialParams?.startDate ?? "");
@@ -100,7 +103,7 @@ export default function PlannerView({
     days: PlannerResult["days"],
     completedDays: string[]
   ) {
-    if (!planId) return;
+    if (!planId || demo) return;
     setSaving(true);
     setSaveError(null);
     const res = await savePlanEdit({ planId, days, completedDays });
@@ -286,6 +289,12 @@ export default function PlannerView({
           )}
 
           <section className="rounded-container bg-surface p-6 shadow-extruded">
+            {demo && (
+              <div className={`${INFO_BANNER} mb-6`}>
+                Demo mode has restricted functionality — plan generation is
+                disabled. Sign in to generate a new plan.
+              </div>
+            )}
             <h2 className="font-display text-base font-bold text-ink">Schedule</h2>
             <p className="mt-1 text-xs font-medium text-muted">
               When can you study? The plan spreads topics across these dates.
@@ -394,7 +403,7 @@ export default function PlannerView({
               </p>
               <button
                 onClick={handleGenerate}
-                disabled={loading || courses.length === 0}
+                disabled={demo || loading || courses.length === 0}
                 className={BTN_PRIMARY}
               >
                 {loading

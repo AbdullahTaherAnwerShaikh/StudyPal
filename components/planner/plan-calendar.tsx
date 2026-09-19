@@ -172,7 +172,7 @@ export default function PlanCalendar({
   };
 
   return (
-    <div className="rounded-container bg-surface p-5 shadow-extruded-sm">
+    <div className="min-w-0 overflow-x-auto rounded-container bg-surface p-5 shadow-extruded-sm">
       <DayPicker
         mode="single"
         selected={selectedDate ?? undefined}
@@ -186,10 +186,10 @@ export default function PlanCalendar({
         fixedWeeks
         weekStartsOn={1}
         classNames={{
-          months: "flex flex-col space-y-4",
-          month: "flex flex-col space-y-3",
+          months: "min-w-0 flex flex-col space-y-4",
+          month: "min-w-0 flex flex-col space-y-3",
           nav: "",
-          month_grid: "w-full border-separate border-spacing-[5px]",
+          month_grid: "min-w-0 w-full table-fixed border-separate border-spacing-[5px]",
           weekdays: "border-0",
           weekday:
             "pb-1 text-center text-[10px] font-bold uppercase tracking-wider text-muted/70",

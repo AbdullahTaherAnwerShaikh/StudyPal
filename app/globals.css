@@ -33,6 +33,25 @@
   --theme-scrollbar-thumb-glow: rgb(0 0 0 / 0.08);
 }
 
+[data-theme-mode="dark"] .prose {
+  --tw-prose-body: var(--theme-ink);
+  --tw-prose-headings: var(--theme-ink);
+  --tw-prose-lead: var(--theme-ink);
+  --tw-prose-links: var(--theme-accent-light);
+  --tw-prose-bold: var(--theme-ink);
+  --tw-prose-counters: var(--theme-muted);
+  --tw-prose-bullets: var(--theme-muted);
+  --tw-prose-hr: color-mix(in srgb, var(--theme-ink) 22%, transparent);
+  --tw-prose-quotes: var(--theme-ink);
+  --tw-prose-quote-borders: var(--theme-accent);
+  --tw-prose-captions: var(--theme-muted);
+  --tw-prose-code: var(--theme-accent-light);
+  --tw-prose-pre-code: var(--theme-ink);
+  --tw-prose-pre-bg: rgb(0 0 0 / 0.45);
+  --tw-prose-th-borders: color-mix(in srgb, var(--theme-ink) 25%, transparent);
+  --tw-prose-td-borders: color-mix(in srgb, var(--theme-ink) 25%, transparent);
+}
+
 [data-theme-mode="dark"] {
   --theme-surface: #2b303a;
   --theme-ink: #e6e9ef;

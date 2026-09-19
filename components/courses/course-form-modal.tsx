@@ -13,6 +13,7 @@ import {
   BTN_SUBMIT,
   ERROR_BANNER,
   FIELD_ERROR,
+  INFO_BANNER,
   INPUT,
   LABEL,
   SEGMENT_ACTIVE,
@@ -51,10 +52,12 @@ export default function CourseFormModal({
   open,
   onClose,
   course,
+  demo = false,
 }: {
   open: boolean;
   onClose: () => void;
   course?: { id: string; name: string; color: string; credits: number | null };
+  demo?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const {
@@ -268,6 +271,13 @@ export default function CourseFormModal({
       title={course ? "Edit course" : "Add course"}
       widthClass={canImport ? "max-w-2xl" : "max-w-md"}
     >
+      {demo && (
+        <div className={`${INFO_BANNER} mb-6`}>
+          Demo mode has restricted functionality — adding a course is disabled.
+          Sign in to create a real course.
+        </div>
+      )}
+
       {canImport && (
         <div className={`${SEGMENT_TRACK} mb-6`}>
           <button
@@ -339,7 +349,7 @@ export default function CourseFormModal({
 
           {error && <p className={ERROR_BANNER}>{error}</p>}
 
-          <button type="submit" disabled={isSubmitting} className={BTN_SUBMIT}>
+          <button type="submit" disabled={isSubmitting || demo} className={BTN_SUBMIT}>
             {isSubmitting ? "Saving..." : course ? "Save changes" : "Create course"}
           </button>
         </form>
@@ -412,7 +422,7 @@ export default function CourseFormModal({
             <button
               type="button"
               onClick={runExtract}
-              disabled={extracting || (!imageDataUrl && !pastedText.trim())}
+              disabled={demo || extracting || (!imageDataUrl && !pastedText.trim())}
               className={BTN_PRIMARY}
             >
               {extracting ? "Extracting…" : "Extract with AI"}
@@ -632,9 +642,9 @@ export default function CourseFormModal({
             >
               Try a different image / text
             </button>
-            <button type="submit" disabled={isSubmitting} className={`${BTN_PRIMARY} px-6`}>
-              {isSubmitting ? "Saving…" : "Create course"}
-            </button>
+<button type="submit" disabled={isSubmitting || demo} className={`${BTN_PRIMARY} px-6`}>
+                {isSubmitting ? "Saving…" : "Create course"}
+              </button>
           </div>
         </form>
       )}

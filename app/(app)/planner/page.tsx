@@ -26,7 +26,7 @@ type SavedPlanRowData = {
 export default async function PlannerPage() {
   if (await isDemoMode()) {
     const demo = getDemoPlannerPage();
-    return <PlannerView {...demo} />;
+    return <PlannerView {...demo} demo />;
   }
 
   const supabase = await createClient();

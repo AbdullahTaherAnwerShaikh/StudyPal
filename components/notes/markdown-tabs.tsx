@@ -50,7 +50,7 @@ export default function MarkdownTabs({
           rows={rows}
           placeholder={placeholder}
           aria-label="Note content (markdown)"
-          className="w-full resize-y rounded-lg border border-ink/20 bg-white px-3 py-2 font-mono text-xs leading-relaxed text-ink outline-none placeholder:text-ink/35 focus:border-moss"
+          className="w-full resize-y rounded-lg border border-ink/20 bg-surface px-3 py-2 font-mono text-xs leading-relaxed text-ink outline-none placeholder:text-ink/35 focus:border-moss"
         />
       ) : (
         <div
